@@ -1,0 +1,334 @@
+---
+title: "Untitled"
+format: docx
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(readxl)
+library(rAmCharts4)
+data <- read_excel("SYE/New R Packages/mapdeck/tech_layoffs.xlsx")
+
+```
+
+```{r}
+# filter data to look only at companys in NYC
+
+data <- data %>%
+  filter(Country == "USA")
+
+data <- data %>% 
+  filter(Location_HQ == "New York City")
+
+data <- data %>%
+  filter(Laid_Off >= 200)
+
+data <- data %>%
+  select(Company, Laid_Off, Year)
+```
+
+```{r}
+# a simple bar chart ####
+amBarChart(
+  data = data,
+  category = "Company", values = "Laid_Off",
+  draggable = TRUE,
+  chartTitle =
+    amText(text = "Number of layoffs", fontSize = 22, color = "orangered"),
+  xAxis = list(
+    title = amText(text = "Company", color = "maroon"),
+    labelRotation = 90  # Adjust the rotation angle as needed
+  ),
+  yAxis = list(
+    title = amText(text = "Layoffs", color = "maroon"),
+    labelRotation = 90,  # Adjust the rotation angle as needed
+    gridLines = amLine(color = "orange", width = 1, opacity = 0.4)
+  ),
+  valueFormatter = "#,###.",
+  caption = amText(text = "Year 2018", color = "red"),
+  theme = "material"
+)
+
+```
+
+```{r}
+
+data1 <- read_excel("SYE/New R Packages/mapdeck/tech_layoffs.xlsx")
+#data1 <- data1 %>%
+ # filter(Company == "Compass")
+
+amBarChart(
+  data = data1,
+  category = "Date_layoffs", values = "Laid_Off",
+  showValues = FALSE,
+  draggable = TRUE,
+  chartTitle =
+    amText(text = "Number of layoffs", fontSize = 22, color = "orangered"),
+  xAxis = list(
+    title = amText(text = "Date", color = "maroon"),
+    labelRotation = 90 # Adjust the rotation angle as needed
+  ),
+  yAxis = list(
+    title = amText(text = "Layoffs", color = "maroon"),
+    labelRotation = 90,  # Adjust the rotation angle as needed
+    gridLines = amLine(color = "orange", width = 1, opacity = 0.4)
+  ),
+  valueFormatter = "#,###.",
+  theme = "material"
+)
+
+```
+
+```{r}
+
+```
+
+```{r}
+# bar chart with individual images in the bullets ####
+
+amBarChart(
+  data = data,
+  category = "Country",
+  values = "Laid_Off",
+  tooltip = amTooltip(
+    text = "{name}: [bold]valueY[/]",
+    textColor = "white",
+    backgroundColor = "#101010",
+    borderColor = "silver"
+  ),
+  draggable = FALSE,
+  backgroundColor = "seashell",
+  bullets = amCircle(
+    radius = 30,
+    color = "white",
+    strokeWidth = 4,
+    image = amImage(
+      href = "inData:href",
+      width = 50, height = 50
+    )
+  ),
+  alwaysShowBullets = TRUE,
+  xAxis = list(title = amText(text = "Programming language")),
+  yAxis = list(
+    title = amText(text = "# users"),
+    gridLines = amLine(color = "orange", width = 1, opacity = 0.4)
+  ),
+  yLimits = c(0, 12000),
+  valueFormatter = "#.",
+  theme = "material")
+```
+
+
+```{r}
+# Assuming 'data' is a data frame containing your data
+# Make sure to replace 'data' with the actual variable name you are using
+
+amLineChart(
+  data = data,
+  width = "700px",
+  xValue = "Laid_Off",
+  yValues = "Year",
+  yValueNames = list(Year = "Year"),
+  trend = list(
+    y1 = list(
+      method = "lm.js",
+      order = 3,
+      style = amLine(color = "lightyellow", dash = "3,2")
+    ),
+    y2 = list(
+      method = "loess",
+      style = amLine(color = "palevioletred", dash = "3,2")
+    )
+  ),
+  draggable = list(y1 = TRUE, y2 = FALSE),
+  backgroundColor = "#30303d",
+  tooltip = amTooltip(
+    text = "[bold]({valueX},{valueY})[/]",
+    textColor = "white",
+    backgroundColor = "#101010",
+    borderColor = "whitesmoke"
+  ),
+  bullets = list(
+    y1 = amCircle(color = "yellow", strokeColor = "olive"),
+    y2 = amCircle(color = "orangered", strokeColor = "darkred")
+  ),
+  alwaysShowBullets = TRUE,
+  cursor = list(
+    extraTooltipPrecision = list(x = 0, y = 2),
+    modifier = list(
+      y = c(
+        "var value = parseFloat(text);",
+        "var style = value > 0 ? '[#0000ff]' : '[#ff0000]';",
+        "text = style + text + '[/]';"
+      )
+    )
+  ),
+  lineStyle = list(
+    y1 = amLine(color = "yellow", width = 4),
+    y2 = amLine(color = "orangered", width = 4)
+  ),
+  chartTitle = amText(
+    text = "Laid Off Employees by Company",
+    color = "whitesmoke",
+    fontWeight = "bold"
+  ),
+  xAxis = list(title = amText(text = "Laid Off",
+                             fontSize = 21,
+                             color = "silver",
+                             fontWeight = "bold"),
+               labels = amAxisLabels(fontSize = 17),
+               breaks = amAxisBreaks(
+                 values = seq(min(data$Laid_Off), max(data$Laid_Off), length.out = 10),
+                 labels = sprintf("[bold %s]%d[/]", rainbow(10), seq(min(data$Laid_Off), max(data$Laid_Off), length.out = 10))
+               )),
+  yAxis = list(title = amText(text = "Year",
+                             fontSize = 21,
+                             color = "silver",
+                             fontWeight = "bold"),
+               labels = amAxisLabels(color = "whitesmoke",
+                                     fontSize = 14),
+               gridLines = amLine(color = "whitesmoke",
+                                  opacity = 0.4,
+                                  width = 1)),
+  yLimits = c(min(data$Year), max(data$Year)),
+  Yformatter = "#.00",
+  caption = amText(text = "[font-style:italic]Try to drag the yellow line![/]",
+                   color = "yellow"),
+  theme = "dark"
+)
+
+```
+
+
+
+```{r}
+
+# a grouped bar chart ####
+
+
+amBarChart(
+  data = data,
+  width = "700px",
+  category = "country",
+  values = c("Year", "Laid_Off"),
+  valueNames = list(Year = "Year", Laid_Off = "Laid_Off"),
+  tooltip = amTooltip(
+    textColor = "white",
+    backgroundColor = "#101010",
+    borderColor = "silver"
+  ),
+  draggable = list(income = TRUE, expenses = FALSE),
+  backgroundColor = "#30303d",
+  columnStyle = list(
+    income = amColumn(
+      color = "darkmagenta",
+      strokeColor = "#cccccc",
+      strokeWidth = 2
+    ),
+    expenses = amColumn(
+      color = "darkred",
+      strokeColor = "#cccccc",
+      strokeWidth = 2
+    )
+  ),
+  chartTitle = amText(text = "Income and expenses per country"),
+  xAxis = list(title = amText(text = "Country")),
+  yAxis = list(
+    title = amText(text = "Income and expenses"),
+    gridLines = amLine(color = "whitesmoke", width = 1, opacity = 0.4),
+    breaks = amAxisBreaks(values = seq(0, 45, by = 5))
+  ),
+  yLimits = c(0, 45),
+  valueFormatter = "#.#",
+  caption = amText(text = "Year 2018"),
+  theme = "dark")
+```
+
+
+```{r}
+library(rAmCharts4)
+library(shiny)
+library(lubridate)
+
+data2 <- data1 %>%
+  select(Year, Laid_Off)
+
+data2 <- data2 %>%
+  group_by(Year) %>%
+  summarize(Laid_Off = sum(Laid_Off))
+
+ui <- fluidPage(
+  br(),
+  fluidRow(
+    column(
+      width = 8,
+      amChart4Output("linechart", height = "500px")
+    ),
+    column(
+      width = 4,
+      tags$fieldset(
+        tags$legend("Chart data"),
+        verbatimTextOutput("chartData"),
+      ),
+      tags$fieldset(
+        tags$legend("Change"),
+        verbatimTextOutput("chartChange")
+      )
+    )
+  )
+)
+
+server <- function(input, output){
+
+  output[["linechart"]] <- renderAmChart4({
+    amLineChart(
+      data = data2,
+      data2 = data2,
+      xValue = "Year",
+      yValues = "Laid_Off",
+      draggable = TRUE,
+      chartTitle = amText(
+        text = "Layoffs by year",
+        color = "crimson",
+        fontWeight = "bold",
+        fontFamily = "cursive"
+      ),
+      xAxis = list(
+        title = "Date",
+        labels = amAxisLabels(rotation = -45),
+        breaks = amAxisBreaks(timeInterval = "1 month")
+      ),
+      yAxis = "Visits",
+      yLimits = c(0, 35),
+      backgroundColor = "whitesmoke",
+      tooltip = "[bold][font-style:italic]{dateX}[/]\nvisits: {valueY}[/]",
+      Yformatter = "#",
+      caption = amText(
+        text = "[bold font-size:22]Year 2018[/]",
+        color = "fuchsia"
+      ),
+      button = amButton(
+        label = amText("Reset data", color = "black"),
+        color = "seashell",
+        position = 0.95
+      ),
+      theme = "dataviz")
+  })
+
+  output[["chartData"]] <- renderPrint({
+    input[["linechart"]]
+  })
+
+  output[["chartChange"]] <- renderPrint({
+    input[["linechart_change"]]
+  })
+
+}
+
+if(interactive()) {
+  shinyApp(ui, server)
+}
+```
+

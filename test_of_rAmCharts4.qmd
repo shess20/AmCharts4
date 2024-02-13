@@ -1,0 +1,269 @@
+---
+title: "Untitled"
+format: html
+editor: visual
+---
+```{r}
+library(rAmCharts4)
+library(shiny)
+library(lubridate)
+
+ui <- fluidPage(
+  br(),
+  fluidRow(
+    column(
+      width = 8,
+      amChart4Output("linechart", height = "500px")
+    ),
+    column(
+      width = 4,
+      tags$fieldset(
+        tags$legend("Chart data"),
+        verbatimTextOutput("chartData"),
+      ),
+      tags$fieldset(
+        tags$legend("Change"),
+        verbatimTextOutput("chartChange")
+      )
+    )
+  )
+)
+
+server <- function(input, output){
+
+  set.seed(666)
+  dat <- data.frame(
+    date = ymd(180101) + months(0:11),
+    visits = rpois(12, 20),
+    x = 1:12
+  )
+
+  output[["linechart"]] <- renderAmChart4({
+    amLineChart(
+      data = dat,
+      data2 = dat,
+      xValue = "date",
+      yValues = "visits",
+      draggable = TRUE,
+      chartTitle = amText(
+        text = "Number of visits",
+        color = "crimson",
+        fontWeight = "bold",
+        fontFamily = "cursive"
+      ),
+      xAxis = list(
+        title = "Date",
+        labels = amAxisLabels(rotation = -45),
+        breaks = amAxisBreaks(timeInterval = "1 month")
+      ),
+      yAxis = "Visits",
+      yLimits = c(0, 35),
+      backgroundColor = "whitesmoke",
+      tooltip = "[bold][font-style:italic]{dateX}[/]\nvisits: {valueY}[/]",
+      Yformatter = "#",
+      caption = amText(
+        text = "[bold font-size:22]Year 2018[/]",
+        color = "fuchsia"
+      ),
+      button = amButton(
+        label = amText("Reset data", color = "black"),
+        color = "seashell",
+        position = 0.95
+      ),
+      theme = "dataviz")
+  })
+
+  output[["chartData"]] <- renderPrint({
+    input[["linechart"]]
+  })
+
+  output[["chartChange"]] <- renderPrint({
+    input[["linechart_change"]]
+  })
+
+}
+
+if(interactive()) {
+  shinyApp(ui, server)
+}
+```
+
+
+
+```{r}
+dat <- data.frame(
+  x = c("T0", "T1", "T2"),
+  y1 = c(7, 15, 10),
+  y2 = c(20, 25, 23),
+  z1 = c(5, 10, 5),
+  z2 = c(25, 20, 15)
+)
+
+amDumbbellChart(
+  width = "500px",
+  data = dat,
+  draggable = TRUE,
+  category = "x",
+  values = rbind(c("y1","y2"), c("z1","z2")),
+  seriesNames = c("Control", "Treatment"),
+  yLimits = c(0, 30),
+  segmentsStyle = list(
+    "Control" = amSegment(width = 2),
+    "Treatment" = amSegment(width = 2)
+  ),
+  bullets = list(
+    y1 = amTriangle(strokeWidth = 0),
+    y2 = amTriangle(rotation = 180, strokeWidth = 0),
+    z1 = amTriangle(strokeWidth = 0),
+    z2 = amTriangle(rotation = 180, strokeWidth = 0)
+  ),
+  tooltip = amTooltip("upper: {openValueY}\nlower: {valueY}", scale = 0.75),
+  xAxis = list(
+    title = amText(
+      "timepoint",
+      fontSize = 17, fontWeight = "bold", fontFamily = "Helvetica"
+    )
+  ),
+  yAxis = list(
+    title = amText(
+      "response",
+      fontSize = 17, fontWeight = "bold", fontFamily = "Helvetica"
+    ),
+    gridLines = amLine("silver", width = 1, opacity = 0.4)
+  ),
+  legend = amLegend(position = "right", itemsWidth = 15, itemsHeight = 15),
+  backgroundColor = "lightyellow",
+  theme = "dataviz"
+)
+```
+
+```{r}
+# a simple bar chart ####
+
+dat <- data.frame(
+  country = c("USA", "China", "Japan", "Germany", "UK", "France"),
+  visits = c(3025, 1882, 1809, 1322, 1122, 1114)
+)
+
+amBarChart(
+  data = dat, data2 = dat,
+  width = "600px",
+  category = "country", values = "visits",
+  draggable = TRUE,
+  tooltip =
+    "[bold font-style:italic #ffff00]{valueY.value.formatNumber('#,###.')}[/]",
+  chartTitle =
+    amText(text = "Visits per country", fontSize = 22, color = "orangered"),
+  xAxis = list(title = amText(text = "Country", color = "maroon")),
+  yAxis = list(
+    title = amText(text = "Visits", color = "maroon"),
+    gridLines = amLine(color = "orange", width = 1, opacity = 0.4)
+  ),
+  yLimits = c(0, 4000),
+  valueFormatter = "#,###.",
+  caption = amText(text = "Year 2018", color = "red"),
+  theme = "material")
+
+
+# bar chart with individual images in the bullets ####
+
+dat <- data.frame(
+  language = c("Python", "Julia", "Java"),
+  users = c(10000, 2000, 5000),
+  href = c(
+    tinyIcon("python", "transparent"),
+    tinyIcon("julia", "transparent"),
+    tinyIcon("java", "transparent")
+  )
+)
+
+amBarChart(
+  data = dat,
+  width = "700px",
+  category = "language",
+  values = "users",
+  valueNames = list(users = "#users"),
+  showValues = FALSE,
+  tooltip = amTooltip(
+    text = "{name}: [bold]valueY[/]",
+    textColor = "white",
+    backgroundColor = "#101010",
+    borderColor = "silver"
+  ),
+  draggable = FALSE,
+  backgroundColor = "seashell",
+  bullets = amCircle(
+    radius = 30,
+    color = "white",
+    strokeWidth = 4,
+    image = amImage(
+      href = "inData:href",
+      width = 50, height = 50
+    )
+  ),
+  alwaysShowBullets = TRUE,
+  xAxis = list(title = amText(text = "Programming language")),
+  yAxis = list(
+    title = amText(text = "# users"),
+    gridLines = amLine(color = "orange", width = 1, opacity = 0.4)
+  ),
+  yLimits = c(0, 12000),
+  valueFormatter = "#.",
+  theme = "material")
+
+
+# a grouped bar chart ####
+
+set.seed(666)
+dat <- data.frame(
+  country = c("USA", "China", "Japan", "Germany", "UK", "France"),
+  visits = c(3025, 1882, 1809, 1322, 1122, 1114),
+  income = rpois(6, 25),
+  expenses = rpois(6, 20)
+)
+
+amBarChart(
+  data = dat,
+  width = "700px",
+  category = "country",
+  values = c("income", "expenses"),
+  valueNames = list(income = "Income", expenses = "Expenses"),
+  tooltip = amTooltip(
+    textColor = "white",
+    backgroundColor = "#101010",
+    borderColor = "silver"
+  ),
+  draggable = list(income = TRUE, expenses = FALSE),
+  backgroundColor = "#30303d",
+  columnStyle = list(
+    income = amColumn(
+      color = "darkmagenta",
+      strokeColor = "#cccccc",
+      strokeWidth = 2
+    ),
+    expenses = amColumn(
+      color = "darkred",
+      strokeColor = "#cccccc",
+      strokeWidth = 2
+    )
+  ),
+  chartTitle = amText(text = "Income and expenses per country"),
+  xAxis = list(title = amText(text = "Country")),
+  yAxis = list(
+    title = amText(text = "Income and expenses"),
+    gridLines = amLine(color = "whitesmoke", width = 1, opacity = 0.4),
+    breaks = amAxisBreaks(values = seq(0, 45, by = 5))
+  ),
+  yLimits = c(0, 45),
+  valueFormatter = "#.#",
+  caption = amText(text = "Year 2018"),
+  theme = "dark")
+```
+
+
+
+
+
+
+
+

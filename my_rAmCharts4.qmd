@@ -1,0 +1,138 @@
+---
+title: "Untitled"
+format: revealjs
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(readxl)
+data <- read_excel("SYE/New R Packages/mapdeck/tech_layoffs.xlsx")
+
+```
+
+```{r}
+# filter data to look only at companys in NYC
+
+data <- data %>%
+  filter(Country == "USA")
+
+data <- data %>% 
+  filter(Location_HQ == "New York City")
+
+data <- data %>%
+  filter(Laid_Off >= 200)
+
+data <- data %>%
+  select(Company, Laid_Off, Year)
+```
+
+```{r}
+# a simple bar chart ####
+amBarChart(
+  data = data,
+  category = "Company", values = "Laid_Off",
+  draggable = TRUE,
+  chartTitle =
+    amText(text = "Number of layoffs", fontSize = 22, color = "orangered"),
+  xAxis = list(
+    title = amText(text = "Company", color = "maroon"),
+    labelRotation = 90  # Adjust the rotation angle as needed
+  ),
+  yAxis = list(
+    title = amText(text = "Layoffs", color = "maroon"),
+    labelRotation = 90,  # Adjust the rotation angle as needed
+    gridLines = amLine(color = "orange", width = 1, opacity = 0.4)
+  ),
+  valueFormatter = "#,###.",
+  caption = amText(text = "Year 2018", color = "red"),
+  theme = "material"
+)
+
+```
+
+```{r}
+# bar chart with individual images in the bullets ####
+
+amBarChart(
+  data = data,
+  category = "Country",
+  values = "Laid_Off",
+  valueNames = list(Laid_Off = "#Laid_Off"),
+  showValues = FALSE,
+  tooltip = amTooltip(
+    text = "{name}: [bold]valueY[/]",
+    textColor = "white",
+    backgroundColor = "#101010",
+    borderColor = "silver"
+  ),
+  draggable = FALSE,
+  backgroundColor = "seashell",
+  bullets = amCircle(
+    radius = 30,
+    color = "white",
+    strokeWidth = 4,
+    image = amImage(
+      href = "inData:href",
+      width = 50, height = 50
+    )
+  ),
+  alwaysShowBullets = TRUE,
+  xAxis = list(title = amText(text = "Programming language")),
+  yAxis = list(
+    title = amText(text = "# users"),
+    gridLines = amLine(color = "orange", width = 1, opacity = 0.4)
+  ),
+  yLimits = c(0, 12000),
+  valueFormatter = "#.",
+  theme = "material")
+
+
+# a grouped bar chart ####
+
+set.seed(666)
+dat <- data.frame(
+  country = c("USA", "China", "Japan", "Germany", "UK", "France"),
+  visits = c(3025, 1882, 1809, 1322, 1122, 1114),
+  income = rpois(6, 25),
+  expenses = rpois(6, 20)
+)
+
+amBarChart(
+  data = dat,
+  width = "700px",
+  category = "country",
+  values = c("income", "expenses"),
+  valueNames = list(income = "Income", expenses = "Expenses"),
+  tooltip = amTooltip(
+    textColor = "white",
+    backgroundColor = "#101010",
+    borderColor = "silver"
+  ),
+  draggable = list(income = TRUE, expenses = FALSE),
+  backgroundColor = "#30303d",
+  columnStyle = list(
+    income = amColumn(
+      color = "darkmagenta",
+      strokeColor = "#cccccc",
+      strokeWidth = 2
+    ),
+    expenses = amColumn(
+      color = "darkred",
+      strokeColor = "#cccccc",
+      strokeWidth = 2
+    )
+  ),
+  chartTitle = amText(text = "Income and expenses per country"),
+  xAxis = list(title = amText(text = "Country")),
+  yAxis = list(
+    title = amText(text = "Income and expenses"),
+    gridLines = amLine(color = "whitesmoke", width = 1, opacity = 0.4),
+    breaks = amAxisBreaks(values = seq(0, 45, by = 5))
+  ),
+  yLimits = c(0, 45),
+  valueFormatter = "#.#",
+  caption = amText(text = "Year 2018"),
+  theme = "dark")
+```
