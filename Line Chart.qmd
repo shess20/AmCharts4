@@ -1,0 +1,483 @@
+---
+title: "Untitled"
+format: html
+editor: visual
+---
+
+```{r}
+library(rAmCharts4)
+library(shiny)
+library(lubridate)
+dat <- read_excel("tech_layoffs.xlsx")
+
+ui <- fluidPage(
+  br(),
+  fluidRow(
+    column(
+      width = 8,
+      amChart4Output("linechart", height = "500px")
+    ),
+    column(
+      width = 4,
+      tags$fieldset(
+        tags$legend("Company_Size_after_layoffs"),
+        verbatimTextOutput("Company_Size_before_Layoffs"),
+      ),
+      tags$fieldset(
+        tags$legend("Change"),
+        verbatimTextOutput("chartChange")
+      )
+    )
+  )
+)
+
+server <- function(input, output){
+
+  set.seed(666)
+  dat <- data.frame(
+    date = ymd(180101) + months(0:11),
+    Company = rep("Example Company", 12),
+    Laid_Off = rep(FALSE, 12),
+    Company_size_before = rpois(12, 20),
+    Company_size_after = rpois(12, 15)
+  )
+
+  output[["linechart"]] <- renderAmChart4({
+    amSerialChart(
+      data = dat,
+      categoryField = "date",
+      rotate = TRUE,
+      fontFamily = "cursive",
+      theme = "dataviz",
+      dataDateFormat = "YYYY-MM-DD",
+      marginRight = 0,
+      marginLeft = 0,
+      legend = amLegend(
+        markerType = "square",
+        position = "top",
+        marginBottom = 20
+      ),
+      chartCursor = amChartCursorSettings(
+        cursorColor = "black",
+        valueBalloonsEnabled = false,
+        cursorAlpha = 0.5
+      ),
+      categoryAxis = amCategoryAxis(
+        parseDates = TRUE,
+        minPeriod = "MM",
+        autoGridCount = false,
+        gridCount = 50
+      ),
+      valueAxes = list(
+        amValueAxis(
+          id = "v1",
+          title = "Company Size",
+          position = "left",
+          axisAlpha = 0
+        )
+      ),
+      graphs = list(
+        amGraph(
+          id = "g1",
+          title = "Before Layoffs",
+          valueField = "Company_size_before",
+          bullet = "round",
+          bulletBorderColor = "#FFFFFF",
+          bulletBorderAlpha = 1,
+          bulletColor = "#FF6600",
+          bulletSize = 5,
+          hideBulletsCount = 50,
+          lineThickness = 2,
+          useLineColorForBulletBorder = true
+        ),
+        amGraph(
+          id = "g2",
+          title = "After Layoffs",
+          valueField = "Company_size_after",
+          bullet = "round",
+          bulletBorderColor = "#FFFFFF",
+          bulletBorderAlpha = 1,
+          bulletColor = "#109618",
+          bulletSize = 5,
+          hideBulletsCount = 50,
+          lineThickness = 2,
+          useLineColorForBulletBorder = true
+        )
+      ),
+      chartScrollbar = amChartScrollbarSettings(
+        graph = "g1",
+        oppositeAxis = false,
+        offset = 30,
+        scrollbarHeight = 80,
+        backgroundAlpha = 0,
+        selectedBackgroundAlpha = 0.1,
+        selectedBackgroundColor = "#888888",
+        graphFillAlpha = 0,
+        graphLineAlpha = 0.5,
+        selectedGraphFillAlpha = 0,
+        selectedGraphLineAlpha = 1,
+        autoGridCount = true,
+        color = "#AAAAAA"
+      )
+    )
+  })
+
+  output[["chartData"]] <- renderPrint({
+    input[["linechart"]]
+  })
+
+  output[["chartChange"]] <- renderPrint({
+    input[["linechart_change"]]
+  })
+
+}
+
+shinyApp(ui, server)
+
+
+```
+
+```{r}
+library(rAmCharts4)
+library(shiny)
+library(lubridate)
+library(readxl)
+
+# Load data from Excel file
+dat <- read_excel("tech_layoffs.xlsx")
+
+ui <- fluidPage(
+  br(),
+  fluidRow(
+    column(
+      width = 8,
+      amChart4Output("linechart", height = "500px")
+    ),
+    column(
+      width = 4,
+      tags$fieldset(
+        tags$legend("Company Size After Layoffs"),
+        verbatimTextOutput("Company_Size_after_Layoffs"),
+      ),
+      tags$fieldset(
+        tags$legend("Change"),
+        verbatimTextOutput("chartChange")
+      )
+    )
+  )
+)
+
+server <- function(input, output){
+
+  output[["linechart"]] <- renderAmChart4({
+    amLineChart(
+      data = dat,
+      xValue = "Date_layoffs",
+      yValues = "Company_Size_after_layoffs",
+      draggable = TRUE,
+      chartTitle = amText(
+        text = "Company Size After Layoffs",
+        color = "crimson",
+        fontWeight = "bold",
+        fontFamily = "cursive"
+      ),
+      xAxis = list(
+        title = "Date",
+        labels = amAxisLabels(rotation = -45),
+        breaks = amAxisBreaks(timeInterval = "1 month")
+      ),
+      yAxis = "Company Size",
+      yLimits = c(0, max(dat$Company_Size_after_layoffs) + 5),
+      backgroundColor = "whitesmoke",
+      tooltip = "[bold][font-style:italic]{dateX}[/]\nCompany Size: {valueY}[/]",
+      Yformatter = "#",
+      caption = amText(
+        text = "[bold font-size:22]Company Size After Layoffs Over Time[/]",
+        color = "fuchsia"
+      ),
+      button = amButton(
+        label = amText("Reset data", color = "black"),
+        color = "seashell",
+        position = 0.95
+      ),
+      theme = "dataviz"
+    )
+  })
+
+  output[["Company_Size_after_Layoffs"]] <- renderPrint({
+    dat_after_layoffs <- dat[dat$Laid_Off == TRUE, ]
+    summary(dat_after_layoffs$Company_Size_after_layoffs)
+  })
+
+  output[["chartChange"]] <- renderPrint({
+    input[["linechart_change"]]
+  })
+
+}
+
+shinyApp(ui, server)
+
+```
+
+
+```{r}
+library(rAmCharts4)
+library(shiny)
+library(lubridate)
+library(readxl)
+
+# Load data from Excel file
+dat <- read_excel("tech_layoffs.xlsx")
+
+# Filter companies with at least 2 Date_layoffs rows
+valid_companies <- names(which(table(dat$Company) >= 2))
+
+ui <- fluidPage(
+  br(),
+  fluidRow(
+    column(
+      width = 4,
+      selectInput("selectedCompany", "Select Company", choices = valid_companies),
+      amChart4Output("linechart", height = "500px")
+    ),
+    column(
+      width = 4,
+      tags$fieldset(
+        tags$legend("Company Size After Layoffs"),
+        verbatimTextOutput("Company_Size_after_Layoffs"),
+      ),
+      tags$fieldset(
+        tags$legend("Change"),
+        verbatimTextOutput("chartChange")
+      )
+    )
+  )
+)
+
+server <- function(input, output){
+
+  output[["linechart"]] <- renderAmChart4({
+    selectedCompanyData <- dat[dat$Company == input$selectedCompany, ]
+    
+    amLineChart(
+      data = selectedCompanyData,
+      xValue = "Date_layoffs",
+      yValues = "Company_Size_after_layoffs",
+      draggable = TRUE,
+      chartTitle = amText(
+        text = paste("Company Size After Layoffs -", input$selectedCompany),
+        color = "crimson",
+        fontWeight = "bold",
+        fontFamily = "cursive"
+      ),
+      xAxis = list(
+        title = "Date",
+        labels = amAxisLabels(rotation = -45),
+        breaks = amAxisBreaks(timeInterval = "1 month")
+      ),
+      yAxis = "Company Size",
+      yLimits = c(0, max(selectedCompanyData$Company_Size_after_layoffs) + 5),
+      backgroundColor = "whitesmoke",
+      tooltip = "[bold][font-style:italic]{dateX}[/]\nCompany Size: {valueY}[/]",
+      Yformatter = "#",
+      caption = amText(
+        text = "[bold font-size:22]Company Size After Layoffs Over Time[/]",
+        color = "fuchsia"
+      ),
+      button = amButton(
+        label = amText("Reset data", color = "black"),
+        color = "seashell",
+        position = 0.95
+      ),
+      theme = "dataviz"
+    )
+  })
+
+  output[["Company_Size_after_Layoffs"]] <- renderPrint({
+    selectedCompanyData <- dat[dat$Company == input$selectedCompany, ]
+    summary(selectedCompanyData$Company_Size_after_layoffs)
+  })
+
+  output[["chartChange"]] <- renderPrint({
+    input[["linechart_change"]]
+  })
+
+}
+
+shinyApp(ui, server)
+
+```
+
+
+
+
+```{r}
+library(rAmCharts4)
+library(shiny)
+library(lubridate)
+library(readxl)
+
+# Load data from Excel file
+dat <- read_excel("tech_layoffs.xlsx")
+
+ui <- fluidPage(
+  br(),
+  fluidRow(
+    column(
+      width = 4,
+      selectInput("selectedCompany", "Select Company", choices = unique(dat$Company)),
+      amChart4Output("linechart", height = "500px")
+    ),
+    column(
+      width = 4,
+      tags$fieldset(
+        tags$legend("Company Size After Layoffs"),
+        verbatimTextOutput("Company_Size_after_Layoffs"),
+      ),
+      tags$fieldset(
+        tags$legend("Change"),
+        verbatimTextOutput("chartChange")
+      )
+    )
+  )
+)
+
+server <- function(input, output){
+
+  output[["linechart"]] <- renderAmChart4({
+    selectedCompanyData <- dat[dat$Company == input$selectedCompany, ]
+    
+    amLineChart(
+      data = selectedCompanyData,
+      xValue = "Date_layoffs",
+      yValues = "Company_Size_after_layoffs",
+      draggable = TRUE,
+      chartTitle = amText(
+        text = paste("Company Size After Layoffs -", input$selectedCompany),
+        color = "crimson",
+        fontWeight = "bold",
+        fontFamily = "cursive"
+      ),
+      xAxis = list(
+        title = "Date",
+        labels = amAxisLabels(rotation = -45),
+        breaks = amAxisBreaks(timeInterval = "1 month")
+      ),
+      yAxis = "Company Size",
+      yLimits = c(0, max(selectedCompanyData$Company_Size_after_layoffs) + 5),
+      backgroundColor = "whitesmoke",
+      tooltip = "[bold][font-style:italic]{dateX}[/]\nCompany Size: {valueY}[/]",
+      Yformatter = "#",
+      caption = amText(
+        text = "[bold font-size:22]Company Size After Layoffs Over Time[/]",
+        color = "fuchsia"
+      ),
+      button = amButton(
+        label = amText("Reset data", color = "black"),
+        color = "seashell",
+        position = 0.95
+      ),
+      theme = "dataviz"
+    )
+  })
+
+  output[["Company_Size_after_Layoffs"]] <- renderPrint({
+    selectedCompanyData <- dat[dat$Company == input$selectedCompany, ]
+    summary(selectedCompanyData$Company_Size_after_layoffs)
+  })
+
+  output[["chartChange"]] <- renderPrint({
+    input[["linechart_change"]]
+  })
+
+}
+
+shinyApp(ui, server)
+
+```
+
+```{r}
+library(rAmCharts4)
+library(shiny)
+library(lubridate)
+library(readxl)
+
+# Load data from Excel file
+dat <- read_excel("tech_layoffs.xlsx")
+
+ui <- fluidPage(
+  br(),
+  fluidRow(
+    column(
+      width = 4,
+      selectInput("selectedCompany", "Select Company", choices = unique(dat$Company)),
+      amChart4Output("linechart", height = "500px", width = "100%")
+    ),
+    column(
+      width = 4,
+      tags$fieldset(
+        tags$legend("Company Size After Layoffs"),
+        verbatimTextOutput("Company_Size_after_Layoffs"),
+      ),
+      tags$fieldset(
+        tags$legend("Change"),
+        verbatimTextOutput("chartChange")
+      )
+    )
+  )
+)
+
+server <- function(input, output){
+
+  output[["linechart"]] <- renderAmChart4({
+    selectedCompanyData <- dat[dat$Company == input$selectedCompany, ]
+    
+    amLineChart(
+      data = selectedCompanyData,
+      xValue = "Date_layoffs",
+      yValues = "Company_Size_after_layoffs",
+      draggable = TRUE,
+      chartTitle = amText(
+        text = paste("Company Size After Layoffs -", input$selectedCompany),
+        color = "crimson",
+        fontWeight = "bold",
+        fontFamily = "cursive"
+      ),
+      xAxis = list(
+        title = "Date",
+        labels = amAxisLabels(rotation = -45),
+        breaks = amAxisBreaks(timeInterval = "1 month")
+      ),
+      yAxis = "Company Size",
+      yLimits = c(0, max(selectedCompanyData$Company_Size_after_layoffs) + 5),
+      backgroundColor = "whitesmoke",
+      tooltip = "[bold][font-style:italic]{dateX}[/]\nCompany Size: {valueY}[/]",
+      Yformatter = "#",
+      caption = amText(
+        text = "[bold font-size:22]Company Size After Layoffs Over Time[/]",
+        color = "fuchsia"
+      ),
+      button = amButton(
+        label = amText("Reset data", color = "black"),
+        color = "seashell",
+        position = 0.95
+      ),
+      theme = "dataviz"
+    )
+  })
+
+  output[["Company_Size_after_Layoffs"]] <- renderPrint({
+    selectedCompanyData <- dat[dat$Company == input$selectedCompany, ]
+    summary(selectedCompanyData$Company_Size_after_layoffs)
+  })
+
+  output[["chartChange"]] <- renderPrint({
+    input[["linechart_change"]]
+  })
+
+}
+
+shinyApp(ui, server)
+
+```
+

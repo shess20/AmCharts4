@@ -1,0 +1,131 @@
+---
+title: "Untitled"
+format: html
+editor: visual
+---
+
+This is a shiny app that combines the line and bar charts in one app where you can select the company that you want to look at from a dropdown box.
+
+```{r}
+library(shiny)
+library(rAmCharts4)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(readxl)
+
+# Load data from Excel file
+dat <- read_excel("tech_layoffs.xlsx")
+
+# Convert the Date_layoffs column to a Date class without the time component
+dat$Date_layoffs <- as.Date(dat$Date_layoffs)
+
+# UI
+ui <- fluidPage(
+  br(),
+  fluidRow(
+    column(
+      width = 4,
+      selectInput("selectedCompany", "Select Company", choices = unique(dat$Company))
+    ),
+    column(
+      width = 4,
+      tags$fieldset(
+        tags$legend("Company Size After Layoffs"),
+        verbatimTextOutput("Company_Size_after_Layoffs"),
+        amChart4Output("linechart", height = "600px", width = "600px"),
+        amChart4Output("barchart", height = "500px", width = "600px")
+      ),
+      tags$fieldset(
+        tags$legend("Change"),
+        verbatimTextOutput("chartChange")
+      )
+    )
+  )
+)
+
+# Server
+server <- function(input, output){
+
+  output[["linechart"]] <- renderAmChart4({
+    selectedCompanyData <- dat[dat$Company == input$selectedCompany, ]
+    
+    amLineChart(
+      data = selectedCompanyData,
+      xValue = "Date_layoffs",
+      yValues = "Company_Size_after_layoffs",
+      draggable = FALSE,
+      chartTitle = amText(
+        text = paste("Company Size After Layoffs -", input$selectedCompany),
+        color = "crimson",
+        fontWeight = "bold",
+        fontFamily = "cursive"
+      ),
+      xAxis = list(
+        title = "Date",
+        labels = amAxisLabels(rotation = -45),
+        breaks = amAxisBreaks(timeInterval = "1 month")
+      ),
+      yAxis = "Company Size",
+      yLimits = c(0, max(selectedCompanyData$Company_Size_after_layoffs) + 5),
+      backgroundColor = "whitesmoke",
+      tooltip = "[bold][font-style:italic]{dateX}[/]\nCompany Size: {valueY}[/]",
+      Yformatter = "#",
+      caption = amText(
+        text = "[bold font-size:22]Company Size After Layoffs Over Time[/]",
+        color = "fuchsia"
+      ),
+      button = amButton(
+        label = amText("Reset data", color = "black"),
+        color = "seashell",
+        position = 0.95
+      ),
+      theme = "dataviz"
+    )
+  })
+
+  output[["Company_Size_after_Layoffs"]] <- renderPrint({
+    selectedCompanyData <- dat[dat$Company == input$selectedCompany, ]
+    summary(selectedCompanyData$Company_Size_after_layoffs)
+  })
+
+  output[["barchart"]] <- renderAmChart4({
+    data1 <- dat %>%
+      filter(Company == input$selectedCompany)
+
+    amBarChart(
+      data = data1,
+      category = "Date_layoffs",
+      values = "Percentage",
+      draggable = FALSE,
+      chartTitle = amText(text = paste("Percentage laid off - ", input$selectedCompany), fontSize = 22, color = "orangered"),
+      width = NULL,
+      height = "500px",
+      xAxis = list(
+        title = amText(text = "Date", color = "maroon"),
+        labels = amAxisLabels(rotation = -45),
+        breaks = amAxisBreaks(timeInterval = "1 month")
+      ),
+      yAxis = list(
+        title = amText(text = "Layoffs", color = "maroon"),
+        labelRotation = 90,
+        gridLines = amLine(color = "orange", width = 1, opacity = 0.4)
+      ), 
+      valueFormatter = "#,###.",
+      caption = amText(text = " ", color = "red"),
+      theme = "material"
+    )
+  })
+
+  output[["chartChange"]] <- renderPrint({
+    input[["linechart_change"]]
+  })
+
+}
+
+shinyApp(ui, server)
+
+```
+
+
+

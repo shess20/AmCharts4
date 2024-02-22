@@ -3,6 +3,7 @@ title: "Untitled"
 format: html
 editor: visual
 ---
+
 ```{r}
 library(rAmCharts4)
 library(shiny)
@@ -87,8 +88,6 @@ if(interactive()) {
   shinyApp(ui, server)
 }
 ```
-
-
 
 ```{r}
 dat <- data.frame(
@@ -259,11 +258,3 @@ amBarChart(
   caption = amText(text = "Year 2018"),
   theme = "dark")
 ```
-
-
-
-
-
-
-
-

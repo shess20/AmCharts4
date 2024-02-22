@@ -99,7 +99,6 @@ server <- function(input, output) {
 
 # Run the application
 shinyApp(ui, server)
-
 ```
 
 ```{r}
@@ -137,7 +136,67 @@ server <- function(input, output) {
       draggable = TRUE,
       chartTitle = amText(text = "Percentage laid off", fontSize = 22, color = "orangered"),
       width = NULL,
-      height = 1300,
+      height = 300,
+      xAxis = list(
+        title = amText(text = "Date", color = "maroon"),
+        labelRotation = 90
+      ),
+      yAxis = list(
+        title = amText(text = "Layoffs", color = "maroon"),
+        labelRotation = 90,
+        gridLines = amLine(color = "orange", width = 1, opacity = 0.4)
+      ), 
+      
+      valueFormatter = "#,###.",
+      caption = amText(text = " ", color = "red"),
+      theme = "material"
+    )
+
+    # Convert chart to HTML
+    htmltools::tagList(chart)
+  })
+}
+
+# Run the application
+shinyApp(ui, server)
+```
+```{r}
+# Load necessary libraries
+library(shiny)
+library(dplyr)
+library(rAmCharts4)
+library(readxl)
+data <- read_excel("tech_layoffs.xlsx")
+
+# UI
+ui <- fluidPage(
+  titlePanel("Interactive Chart App"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("company", "Select Company", unique(data$Company))
+    ),
+    mainPanel(
+      htmlOutput("barchart"),  # Change this to the correct output function
+      style = "height:100%;"  # Set mainPanel height to 100%
+    )
+  ),
+  # Set fluidPage height to 100%
+  tags$head(tags$style(HTML("html, body {height: 100%;}")))
+)
+
+# Server
+server <- function(input, output) {
+  output$barchart <- renderUI({
+    data1 <- data %>%
+      filter(Company == input$company)
+
+    # Adjust your chart creation code here
+    chart <- amBarChart(
+      data = data1,
+      category = "Date_layoffs",
+      values = "Percentage",
+      draggable = TRUE,
+      chartTitle = amText(text = "Percentage laid off", fontSize = 22, color = "orangered"),
       xAxis = list(
         title = amText(text = "Date", color = "maroon"),
         labelRotation = 90
@@ -162,6 +221,92 @@ server <- function(input, output) {
 shinyApp(ui, server)
 
 ```
+
+```{r}
+# Load necessary libraries
+library(shiny)
+library(dplyr)
+library(rAmCharts4)
+library(readxl)
+data <- read_excel("tech_layoffs.xlsx")
+
+# UI
+ui <- fluidPage(
+  titlePanel("Interactive Chart App"),
+  tags$head(
+    tags$style(HTML("html, body {height: 100%;}")),
+    tags$script(
+      HTML(
+        "
+        $(document).ready(function(){
+          // Set the initial height
+          adjustHeight();
+
+          // Adjust the height whenever the window is resized
+          $(window).resize(function(){
+            adjustHeight();
+          });
+
+          // Function to adjust the height of mainPanel
+          function adjustHeight(){
+            var windowHeight = $(window).height();
+            var newHeight = windowHeight - $('.navbar').height(); // Adjust for other components if needed
+            $('.main-panel').height(newHeight);
+          }
+        });
+        "
+      )
+    )
+  ),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("company", "Select Company", unique(data$Company))
+    ),
+    mainPanel(
+      amChart4Output("barchart", height = "100%")  # Set amChart4Output height to 100%
+    )
+  )
+)
+
+# Server
+server <- function(input, output) {
+  output$barchart <- renderAmChart4({
+    data1 <- data %>%
+      filter(Company == input$company)
+
+    # Adjust your chart creation code here
+    chart <- amBarChart(
+      data = data1,
+      category = "Date_layoffs",
+      values = "Percentage",
+      draggable = TRUE,
+      chartTitle = amText(text = "Percentage laid off", fontSize = 22, color = "orangered"),
+      width = NULL,
+      height = "100%",  # Set chart height to 100%
+      xAxis = list(
+        title = amText(text = "Date", color = "maroon"),
+        labelRotation = 90
+      ),
+      yAxis = list(
+        title = amText(text = "Layoffs", color = "maroon"),
+        labelRotation = 90,
+        gridLines = amLine(color = "orange", width = 1, opacity = 0.4)
+      ), 
+      
+      valueFormatter = "#,###.",
+      caption = amText(text = " ", color = "red"),
+      theme = "material"
+    )
+
+    # Return the chart
+    chart
+  })
+}
+
+# Run the application
+shinyApp(ui, server)
+```
+
 
 
 
