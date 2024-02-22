@@ -9,7 +9,7 @@ library(tidyverse)
 library(dplyr)
 library(readxl)
 library(rAmCharts4)
-data <- read_excel("SYE/New R Packages/mapdeck/tech_layoffs.xlsx")
+data <- read_excel("tech_layoffs.xlsx")
 
 ```
 
@@ -26,7 +26,7 @@ data <- data %>%
   filter(Laid_Off >= 200)
 
 data <- data %>%
-  select(Company, Laid_Off, Year)
+  select(Company, Laid_Off, Year, 5)
 ```
 
 ```{r}
@@ -50,6 +50,132 @@ amBarChart(
   caption = amText(text = "Year 2018", color = "red"),
   theme = "material"
 )
+
+
+
+```
+
+```{r}
+library(rAmCharts4)
+library(dplyr)
+library(shinyjs)
+
+# Sample data
+data <- data.frame(
+  Date = rep(seq(as.Date("2018-01-01"), by = "months", length.out = 3), each = 4),
+  Company = rep(letters[1:4], times = 3),
+  Laid_Off = c(10, 20, 15, 25, 18, 30, 22, 35, 12, 25, 20, 30)
+)
+
+# Convert 'Date' to a factor for better ordering
+data$Date <- as.factor(data$Date)
+
+# Create a list to store individual bar charts
+charts_list <- list()
+
+# Loop through unique dates
+for (date in unique(data$Date)) {
+  subset_data <- data %>% filter(Date == date)
+
+  chart <- amBarChart(
+    data = subset_data,
+    category = "Company",
+    values = "Laid_Off",
+    draggable = TRUE,
+    chartTitle = amText(text = paste("Number of layoffs on", date), fontSize = 22, color = "orangered"),
+    xAxis = list(
+      title = amText(text = "Company", color = "maroon"),
+      labelRotation = 90  # Adjust the rotation angle as needed
+    ),
+    yAxis = list(
+      title = amText(text = "Layoffs", color = "maroon"),
+      labelRotation = 90,  # Adjust the rotation angle as needed
+      gridLines = amLine(color = "orange", width = 1, opacity = 0.4)
+    ),
+    valueFormatter = "#,###.",
+    theme = "material"
+  )
+
+  # Wrap the chart in an htmltools::tag()
+  charts_list[[as.character(date)]] <- tagList(chart)
+}
+
+# Display individual charts in a grid-like layout
+subplot(charts_list)
+```
+
+```{r}
+library(rAmCharts4)
+library(dplyr)
+library(shiny)
+library(shinydashboard)
+
+# Assuming 'data' is your data frame
+# Convert the 'Year' column to a factor
+data$Year <- as.factor(data$Year)
+
+# Summarize the total layoffs by year, company, and continent
+summarized_data <- data %>%
+  group_by(Year, Company, Continent) %>%
+  summarise(Total_Layoffs = sum(Laid_Off))
+
+# Create a list to store individual bar charts
+charts_list <- list()
+
+# Loop through unique combinations of 'Year' and 'Continent'
+for (year in unique(summarized_data$Year)) {
+  for (continent in unique(summarized_data$Continent)) {
+    subset_data <- summarized_data %>%
+      filter(Year == year, Continent == continent)
+
+    chart <- amBarChart(
+      data = subset_data,
+      category = "Company",
+      values = "Total_Layoffs",
+      draggable = TRUE,
+      chartTitle = amText(text = paste("Total Layoffs in", year, "-", continent), fontSize = 22, color = "orangered"),
+      xAxis = list(
+        title = amText(text = "Company", color = "maroon"),
+        labelRotation = 90  # Adjust the rotation angle as needed
+      ),
+      yAxis = list(
+        title = amText(text = "Total Layoffs", color = "maroon"),
+        labelRotation = 90,  # Adjust the rotation angle as needed
+        gridLines = amLine(color = "orange", width = 1, opacity = 0.4)
+      ),
+      valueFormatter = "#,###.",
+      theme = "material",
+      width = 600,  # Set the width of the chart
+      height = 400  # Set the height of the chart
+    )
+
+    # Wrap the chart in an htmltools::tag()
+    charts_list[[paste(year, continent)]] <- tagList(chart)
+  }
+}
+
+# Display individual charts in a grid-like layout
+ui <- dashboardPage(
+  dashboardHeader(title = "Individual Bar Charts"),
+  dashboardSidebar(),
+  dashboardBody(
+    fluidRow(
+      box(width = 6, charts_list[[1]]),
+      box(width = 6, charts_list[[2]])
+      # Add more boxes as needed
+      # Adjust box widths or add more rows for better spacing
+    )
+  )
+)
+
+shinyApp(ui, function(input, output, session) {})
+
+```
+
+```{shinyApp(ui, function(input, output, session) {})}
+
+
+
 
 ```
 
@@ -79,9 +205,94 @@ amBarChart(
   theme = "material"
 )
 
+
 ```
 
 ```{r}
+# Install required packages if not already installed
+if (!requireNamespace("shiny", quietly = TRUE)) {
+  install.packages("shiny")
+}
+if (!requireNamespace("shinyjs", quietly = TRUE)) {
+  install.packages("shinyjs")
+}
+if (!requireNamespace("jsonlite", quietly = TRUE)) {
+  install.packages("jsonlite")
+}
+
+# Load packages
+library(shiny)
+library(shinyjs)
+library(jsonlite)
+
+# Sample data
+data <- data.frame(
+  Company = c("A", "B", "C", "D"),
+  Laid_Off = c(100, 150, 80, 120)
+)
+
+ui <- fluidPage(
+  titlePanel("Adjustable Bar Chart and Feedback"),
+
+  sidebarLayout(
+    sidebarPanel(
+      sliderInput("bar_A", "Company A", min = 0, max = 300, value = 100, step = 10)
+    ),
+
+    mainPanel(
+      div(id = "barChart"),
+      h4("Total Layoffs:"),
+      textOutput("totalFeedback")
+    )
+  )
+)
+
+server <- function(input, output) {
+  # Reactive values to store the updated data
+  updated_data <- reactiveVal(data)
+
+  # Update data when the slider changes
+  observeEvent(input$bar_A, {
+    new_data <- data
+    new_data[new_data$Company == "A", "Laid_Off"] <- input$bar_A
+    updated_data(new_data)
+
+    # Update the chart using shinyjs
+    runjs(sprintf("updateChart(%s);", toJSON(new_data)))
+  })
+
+  # Render total layoffs feedback
+  output$totalFeedback <- renderText({
+    total_layoffs <- sum(updated_data()$Laid_Off)
+    paste("Total Layoffs: ", total_layoffs)
+  })
+
+  # JavaScript code to initialize and update the chart
+  js_code <- '
+    function createChart(data) {
+      // Create or update your amCharts4 chart here using the provided data
+      // For simplicity, let\'s just print the data to the console
+      console.log(data);
+    }
+
+    // Run createChart when the page loads
+    $(document).ready(function() {
+      createChart(%s);
+    });
+
+    // Function to update the chart with new data
+    function updateChart(newData) {
+      // Call the createChart function with the updated data
+      createChart(newData);
+    }
+  '
+
+  # Add the JavaScript code to the app
+  shinyjs::runjs(js_code)
+}
+
+shinyApp(ui, server)
+
 
 ```
 
@@ -119,7 +330,6 @@ amBarChart(
   valueFormatter = "#.",
   theme = "material")
 ```
-
 
 ```{r}
 # Assuming 'data' is a data frame containing your data
@@ -201,17 +411,15 @@ amLineChart(
 
 ```
 
-
-
 ```{r}
 
 # a grouped bar chart ####
-
+library(rAmCharts4)
 
 amBarChart(
   data = data,
   width = "700px",
-  category = "country",
+  category = "Country",
   values = c("Year", "Laid_Off"),
   valueNames = list(Year = "Year", Laid_Off = "Laid_Off"),
   tooltip = amTooltip(
@@ -245,7 +453,6 @@ amBarChart(
   caption = amText(text = "Year 2018"),
   theme = "dark")
 ```
-
 
 ```{r}
 library(rAmCharts4)
@@ -331,4 +538,3 @@ if(interactive()) {
   shinyApp(ui, server)
 }
 ```
-

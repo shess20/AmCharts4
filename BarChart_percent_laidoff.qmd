@@ -1,0 +1,167 @@
+---
+title: "Untitled"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(readxl)
+library(rAmCharts4)
+data <- read_excel("tech_layoffs.xlsx")
+
+```
+
+
+
+
+
+
+```{r}
+data <- read_excel("tech_layoffs.xlsx")
+
+data1 <- data %>%
+  filter(Company == "Compass")
+  
+amBarChart(
+  data = data1,
+  category = "Date_layoffs", values = "Percentage",
+  draggable = TRUE,
+  chartTitle =
+    amText(text = "Percentage laid off", fontSize = 22, color = "orangered"),
+  xAxis = list(
+    title = amText(text = "Date", color = "maroon"),
+    labelRotation = 90  # Adjust the rotation angle as needed
+  ),
+  yAxis = list(
+    title = amText(text = "Layoffs", color = "maroon"),
+    labelRotation = 90,  # Adjust the rotation angle as needed
+    gridLines = amLine(color = "orange", width = 1, opacity = 0.4)
+  ),
+  valueFormatter = "#,###.",
+  caption = amText(text = "Year 2018", color = "red"),
+  theme = "material"
+)
+```
+
+```{r}
+# Install necessary packages if not already installed
+# install.packages(c("shiny", "dplyr", "rAmCharts4"))
+
+# Load required libraries
+library(shiny)
+library(dplyr)
+library(rAmCharts4)
+library(readxl)
+data <- read_excel("tech_layoffs.xlsx")
+
+# UI
+ui <- fluidPage(
+  titlePanel("Interactive Chart App"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("company", "Select Company", unique(data$Company))
+    ),
+    mainPanel(
+      htmlOutput("barchart")
+    )
+  )
+)
+
+# Server
+server <- function(input, output) {
+  output$barchart <- renderUI({
+    data1 <- data %>%
+      filter(Company == input$company)
+
+    amBarChart(
+      data = data1,
+      category = "Date_layoffs",
+      values = "Percentage",
+      draggable = TRUE,
+      chartTitle = amText(text = "Percentage laid off", fontSize = 22, color = "orangered"),
+      xAxis = list(
+        title = amText(text = "Date", color = "maroon")
+        #labelRotation = 90
+      ),
+      yAxis = list(
+        title = amText(text = "Layoffs", color = "maroon"),
+        #labelRotation = 90,
+        gridLines = amLine(color = "orange", width = 1, opacity = 0.4)
+      ),
+      valueFormatter = "#,###.",
+      caption = amText(text = "Year 2018", color = "red"),
+      theme = "material"
+    )
+  })
+}
+
+# Run the application
+shinyApp(ui, server)
+
+```
+
+```{r}
+# Load necessary libraries
+library(shiny)
+library(dplyr)
+library(rAmCharts4)
+library(readxl)
+data <- read_excel("tech_layoffs.xlsx")
+
+# UI
+ui <- fluidPage(
+  titlePanel("Interactive Chart App"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("company", "Select Company", unique(data$Company))
+    ),
+    mainPanel(
+      htmlOutput("barchart")  # Change this to the correct output function
+    )
+  )
+)
+
+# Server
+server <- function(input, output) {
+  output$barchart <- renderUI({
+    data1 <- data %>%
+      filter(Company == input$company)
+
+    # Adjust your chart creation code here
+    chart <- amBarChart(
+      data = data1,
+      category = "Date_layoffs",
+      values = "Percentage",
+      draggable = TRUE,
+      chartTitle = amText(text = "Percentage laid off", fontSize = 22, color = "orangered"),
+      width = NULL,
+      height = 1300,
+      xAxis = list(
+        title = amText(text = "Date", color = "maroon"),
+        labelRotation = 90
+      ),
+      yAxis = list(
+        title = amText(text = "Layoffs", color = "maroon"),
+        labelRotation = 90,
+        gridLines = amLine(color = "orange", width = 1, opacity = 0.4)
+      ), 
+      
+      valueFormatter = "#,###.",
+      caption = amText(text = " ", color = "red"),
+      theme = "material"
+    )
+
+    # Convert chart to HTML
+    htmltools::tagList(chart)
+  })
+}
+
+# Run the application
+shinyApp(ui, server)
+
+```
+
+
+
