@@ -13,11 +13,6 @@ data <- read_excel("tech_layoffs.xlsx")
 
 ```
 
-
-
-
-
-
 ```{r}
 data <- read_excel("tech_layoffs.xlsx")
 
@@ -160,6 +155,7 @@ server <- function(input, output) {
 # Run the application
 shinyApp(ui, server)
 ```
+
 ```{r}
 # Load necessary libraries
 library(shiny)
@@ -306,7 +302,3 @@ server <- function(input, output) {
 # Run the application
 shinyApp(ui, server)
 ```
-
-
-
-

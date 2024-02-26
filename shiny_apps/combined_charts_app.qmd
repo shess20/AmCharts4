@@ -33,7 +33,7 @@ ui <- fluidPage(
       tags$fieldset(
         tags$legend("Company Size After Layoffs"),
         verbatimTextOutput("Company_Size_after_Layoffs"),
-        amChart4Output("linechart", height = "600px", width = "600px"),
+        amChart4Output("linechart", height = "600px", width = "900px"),
         amChart4Output("barchart", height = "500px", width = "600px")
       ),
       tags$fieldset(
@@ -63,7 +63,7 @@ server <- function(input, output){
       ),
       xAxis = list(
         title = "Date",
-        labels = amAxisLabels(rotation = -45),
+        labels = amAxisLabels(rotation = -90),
         breaks = amAxisBreaks(timeInterval = "1 month")
       ),
       yAxis = "Company Size",
@@ -124,8 +124,4 @@ server <- function(input, output){
 }
 
 shinyApp(ui, server)
-
 ```
-
-
-
