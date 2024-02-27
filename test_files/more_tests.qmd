@@ -1,0 +1,210 @@
+---
+title: "Test Again"
+format: html
+editor: visual
+---
+
+```{r}
+library(shiny)
+library(rAmCharts4)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(readxl)
+
+# Load data from Excel file
+dat <- read_excel("data/tech_layoffs.xlsx")
+
+# Convert the Date_layoffs column to a Date class without the time component
+dat$Date_layoffs <- as.Date(dat$Date_layoffs)
+
+# UI
+ui <- fluidPage(
+  br(),
+  fluidRow(
+    column(
+      width = 4,
+      selectizeInput("selectedCompany", "Select Company", choices = unique(dat$Company), multiple = FALSE)
+    ),
+    column(
+      width = 4,
+      checkboxGroupInput("selectedChartTypes", "Select Chart Types to Display",
+                         choices = c("Line Chart", "Bar Chart", "Scatter Chart", "Pie Chart"),
+                         selected = c("Line Chart", "Bar Chart")
+      ),
+      tags$fieldset(
+        tags$legend("Company Size After Layoffs"),
+        verbatimTextOutput("Company_Size_after_Layoffs"),
+        conditionalPanel(
+          condition = "input.selectedChartTypes.indexOf('Line Chart') != -1",
+          amChart4Output("linechart", height = "600px", width = "900px")
+        ),
+        conditionalPanel(
+          condition = "input.selectedChartTypes.indexOf('Bar Chart') != -1",
+          amChart4Output("barchart", height = "500px", width = "600px")
+        ),
+        conditionalPanel(
+          condition = "input.selectedChartTypes.indexOf('Scatter Chart') != -1",
+          amChart4Output("scatterchart", height = "500px", width = "600px")
+        ),
+        conditionalPanel(
+          condition = "input.selectedChartTypes.indexOf('Pie Chart') != -1",
+          amChart4Output("piechart", height = "500px", width = "600px")
+        )
+      ),
+      tags$fieldset(
+        tags$legend("Change"),
+        verbatimTextOutput("chartChange")
+      )
+    )
+  )
+)
+
+# Server
+server <- function(input, output){
+  
+  resetButtonClicked <- reactiveVal(FALSE)
+  
+  observeEvent(input$selectedChartTypes, {
+    resetButtonClicked(TRUE)
+  })
+
+  output[["linechart"]] <- renderAmChart4({
+    if ("Line Chart" %in% input$selectedChartTypes) {
+      selectedCompanyData <- dat[dat$Company == input$selectedCompany, ]
+
+      amLineChart(
+        data = selectedCompanyData,
+        xValue = "Date_layoffs",
+        yValues = "Company_Size_after_layoffs",
+        draggable = FALSE,
+        chartTitle = amText(
+          text = paste("Company Size After Layoffs -", input$selectedCompany),
+          color = "crimson",
+          fontWeight = "bold",
+          fontFamily = "cursive"
+        ),
+        xAxis = list(
+          title = "Date",
+          labels = amAxisLabels(rotation = -90),
+          breaks = amAxisBreaks(timeInterval = "1 month")
+        ),
+        yAxis = "Company Size",
+        yLimits = c(0, max(selectedCompanyData$Company_Size_after_layoffs) + 5),
+        backgroundColor = "whitesmoke",
+        tooltip = "[bold][font-style:italic]{dateX}[/]\nCompany Size: {valueY}[/]",
+        Yformatter = "#",
+        caption = amText(
+          text = "[bold font-size:22]Company Size After Layoffs Over Time[/]",
+          color = "fuchsia"
+        ),
+        button = if (resetButtonClicked()) {
+          amButton(
+            label = amText("Reset data", color = "black"),
+            color = "seashell",
+            position = 0.95
+          )
+        },
+        theme = "dataviz"
+      )
+    }
+  })
+
+  output[["Company_Size_after_Layoffs"]] <- renderPrint({
+    selectedCompanyData <- dat[dat$Company == input$selectedCompany, ]
+    summary(selectedCompanyData$Company_Size_after_layoffs)
+  })
+
+  output[["barchart"]] <- renderAmChart4({
+    if ("Bar Chart" %in% input$selectedChartTypes) {
+      data1 <- dat %>%
+        filter(Company == input$selectedCompany)
+
+      amBarChart(
+        data = data1,
+        category = "Date_layoffs",
+        values = "Percentage",
+        draggable = FALSE,
+        chartTitle = amText(text = paste("Percentage laid off - ", input$selectedCompany), fontSize = 22, color = "orangered"),
+        width = NULL,
+        height = "500px",
+        xAxis = list(
+          title = amText(text = "Date", color = "maroon"),
+          labels = amAxisLabels(rotation = -45),
+          breaks = amAxisBreaks(timeInterval = "1 month")
+        ),
+        yAxis = list(
+          title = amText(text = "Layoffs", color = "maroon"),
+          labelRotation = 90,
+          gridLines = amLine(color = "orange", width = 1, opacity = 0.4)
+        ), 
+        valueFormatter = "#,###.",
+        caption = amText(text = " ", color = "red"),
+        theme = "dataviz"
+      )
+    }
+  })
+  output[["scatterchart"]] <- renderAmChart4({
+    if ("Scatter Chart" %in% input$selectedChartTypes) {
+      selectedCompanyData <- dat[dat$Company == input$selectedCompany, ]
+
+      amScatterChart(
+        data = selectedCompanyData,
+        xValue = "Date_layoffs",
+        yValues = c("Company_Size_before_Layoffs", "Company_Size_after_layoffs"),
+        chartTitle = amText(
+          text = paste("Scatter Chart -", input$selectedCompany),
+          color = "blue",
+          fontWeight = "bold",
+          fontFamily = "cursive"
+        ),
+        xAxis = list(
+          title = "Date",
+          labels = amAxisLabels(rotation = -90),
+          breaks = amAxisBreaks(timeInterval = "1 month")
+        ),
+        yAxis = list(
+          title = amText(text = "Company Size", color = "blue")
+        ),
+        backgroundColor = "whitesmoke",
+        tooltip = "[bold][font-style:italic]{dateX}[/]\nBefore Layoffs: {valueY[0]}\nAfter Layoffs: {valueY[1]}[/]",
+        Yformatter = "#",
+        caption = amText(
+          text = "[bold font-size:22]Scatter Chart Over Time[/]",
+          color = "blue"
+        ),
+        theme = "dataviz"
+      )
+    }
+  })
+
+output[["piechart"]] <- renderAmChart4({
+  if ("Pie Chart" %in% input$selectedChartTypes) {
+    data1 <- dat %>%
+      filter(Company == input$selectedCompany)
+
+    amPieChart(
+      data = data1,
+      category = "Company_Size_after_layoffs",
+      value = "Percentage",  # Use 'value' instead of 'values'
+      chartTitle = amText(
+        text = paste("Pie Chart -", input$selectedCompany),
+        color = "green",
+        fontWeight = "bold",
+        fontFamily = "cursive"
+      ),
+      theme = "dataviz"
+    )
+  }
+})
+
+
+  output[["chartChange"]] <- renderPrint({
+    input[["linechart_change"]]
+  })
+
+}
+
+shinyApp(ui, server)
+
+```
