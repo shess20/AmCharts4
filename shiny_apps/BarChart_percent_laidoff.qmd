@@ -9,12 +9,12 @@ library(tidyverse)
 library(dplyr)
 library(readxl)
 library(rAmCharts4)
-data <- read_excel("tech_layoffs.xlsx")
+data <- read_excel("data/tech_layoffs.xlsx")
 
 ```
 
 ```{r}
-data <- read_excel("tech_layoffs.xlsx")
+data <- read_excel("data/tech_layoffs.xlsx")
 
 data1 <- data %>%
   filter(Company == "Compass")
@@ -49,7 +49,7 @@ library(shiny)
 library(dplyr)
 library(rAmCharts4)
 library(readxl)
-data <- read_excel("tech_layoffs.xlsx")
+data <- read_excel("data/tech_layoffs.xlsx")
 
 # UI
 ui <- fluidPage(

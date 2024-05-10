@@ -319,7 +319,7 @@ ui <- fluidPage(
         )
       ),
       tags$fieldset(
-        tags$legend("Company Size After Layoffs"),
+        tags$legend("Summary Statistics"),
         verbatimTextOutput("Company_Size_after_Layoffs"),
         conditionalPanel(
           condition = "input.selectedChartTypes.indexOf('Line Chart') != -1",
@@ -358,7 +358,7 @@ server <- function(input, output){
         yValues = input$selectedYVariableLine,
         draggable = FALSE,
         chartTitle = amText(
-          text = paste("Company Size After Layoffs -", input$selectedCompany),
+          text = (paste(input$selectedYVariableLine, " - ", input$selectedCompany)),
           color = "crimson",
           fontWeight = "bold",
           fontFamily = "cursive"
@@ -366,7 +366,7 @@ server <- function(input, output){
         xAxis = list(
           title = amText(text = "Date", color = "maroon"),
           labels = amAxisLabels(rotation = -90),
-          breaks = amAxisBreaks(timeInterval = "1 month")
+          breaks = amAxisBreaks(timeInterval = "1 year")
         ),
         yAxis = input$selectedYVariableLine,
         yLimits = c(0, max(selectedCompanyData[[input$selectedYVariableLine]]) + 5),
@@ -430,5 +430,4 @@ server <- function(input, output){
 }
 
 shinyApp(ui, server)
-
 ```
